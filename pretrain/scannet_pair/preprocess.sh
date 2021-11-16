@@ -3,8 +3,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-export SCANNET_DIR=<path_to_downloaded_data>
-export TARGET=<path_to_target_data>   # data destination (change here)
+export SCANNET_DIR=/robodata/scannet
+export TARGET=/robodata/aaadkins/derived_data/scannet   # data destination (change here)
 
 reader() {
     filename=$1

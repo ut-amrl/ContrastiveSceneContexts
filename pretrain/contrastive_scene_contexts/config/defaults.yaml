@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 defaults:
-  - hydra/launcher: submitit_slurm
+  - hydra/launcher: submitit_local
   - hydra/hydra_logging: colorlog
 
 trainer:
@@ -95,7 +95,6 @@ hydra:
   sweep:
     dir: ${misc.out_dir}
   launcher:
-    partition: debug
     submitit_folder: ${hydra.sweep.dir}/.submitit/%j
     name: ${hydra.job.name}
     timeout_min: 3600
@@ -104,6 +103,6 @@ hydra:
     tasks_per_node: 1
     mem_gb: 320
     nodes: 1
-    exclude: balrog,gimli
-    max_num_timeout: 3
-    signal_delay_s: 300
+    #exclude: balrog,gimli
+    #max_num_timeout: 3
+    #signal_delay_s: 300

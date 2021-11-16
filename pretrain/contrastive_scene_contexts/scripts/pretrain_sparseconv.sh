@@ -8,7 +8,7 @@
 
 MODEL=Res16UNet34C
 
-python ddp_train.py -m \
+python ddp_train.py  \
     net.model=$MODEL \
     net.conv1_kernel_size=3 \
     net.model_n_out=32 \
@@ -35,7 +35,7 @@ python ddp_train.py -m \
     misc.npos=4096 \
     misc.nceT=0.4 \
     misc.out_dir=${OUT_DIR} \
-    hydra.launcher.partition=priority \
-    hydra.launcher.timeout_min=3600 \
-    hydra.launcher.max_num_timeout=5 \
-    hydra.launcher.comment=criticalExp \
+#    hydra.launcher.partition=priority \
+#    hydra.launcher.timeout_min=3600 \
+#    hydra.launcher.max_num_timeout=5 \
+#    hydra.launcher.comment=criticalExp \
