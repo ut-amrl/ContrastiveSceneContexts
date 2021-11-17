@@ -1,11 +1,8 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
-from model.resnet import ResNetBase, get_norm
-from model.common import ConvType, NormType, conv, conv_tr
-from model.resnet_block import BasicBlock, Bottleneck
 
-from MinkowskiEngine import MinkowskiReLU, MinkowskiGlobalPooling, MinkowskiLeakyReLU
+from MinkowskiEngine import MinkowskiReLU, MinkowskiGlobalPooling
 from MinkowskiEngine import SparseTensor
 
 import torch
@@ -14,8 +11,8 @@ import torch.nn as nn
 import MinkowskiEngine as ME
 from MinkowskiEngine import MinkowskiNetwork
 
-from model.modules.common import ConvType, NormType, get_norm, conv, sum_pool
-from model.modules.resnet_block import BasicBlock, Bottleneck
+from model.common import ConvType, NormType, get_norm, conv, sum_pool
+from model.resnet_block import BasicBlock, Bottleneck
 
 
 class ClusterLabelModel(MinkowskiNetwork):
@@ -33,8 +30,10 @@ class ClusterLabelModel(MinkowskiNetwork):
     def __init__(self, in_channels, out_channels, config, D=3, **kwargs):
         assert self.BLOCK is not None
         assert self.OUT_PIXEL_DIST > 0
-
-        super(MinkowskiNetwork, self).__init__(D)
+        print("D:")
+        print(D)
+        MinkowskiNetwork.__init__(self, D)
+        # super(MinkowskiNetwork, self).__init__(D)
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.config = config
@@ -54,7 +53,8 @@ class ClusterLabelModel(MinkowskiNetwork):
         return nn.Sequential(
             ME.MinkowskiLinear(in_channel, out_channel, bias=False),
             ME.MinkowskiBatchNorm(out_channel),
-            ME.MinkowskiLeakyReLU(), # Should this be relu to align with the rest of the network?
+            ME.MinkowskiReLU() # Switched to ReLU instead of LeakyReLU because v0.4.3 doesn't have leaky
+            # ME.MinkowskiLeakyReLU(), # Should this be relu to align with the rest of the network?
         )
 
     def _make_layer(self,

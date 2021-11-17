@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch.nn as nn
-from model.modules.common import ConvType, NormType, get_norm, conv
+from model.common import ConvType, NormType, get_norm, conv
 from MinkowskiEngine import MinkowskiReLU
 
 
