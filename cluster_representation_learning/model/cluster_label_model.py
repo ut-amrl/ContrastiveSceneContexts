@@ -7,12 +7,16 @@ from MinkowskiEngine import SparseTensor
 
 import torch
 import torch.nn as nn
+from torch.serialization import default_restore_location
 
 import MinkowskiEngine as ME
 from MinkowskiEngine import MinkowskiNetwork
 
 from model.common import ConvType, NormType, get_norm, conv, sum_pool
 from model.resnet_block import BasicBlock, Bottleneck
+from lib.utils import checkpoint, precision_at_one, Timer, AverageMeter, get_prediction, load_state_with_same_shape, count_parameters
+
+import logging
 
 
 class ClusterLabelModel(MinkowskiNetwork):
@@ -239,3 +243,20 @@ class ClusterLabelModel(MinkowskiNetwork):
                 coords_manager=contrastive.coords_man)
 
         return contrastive
+
+    def updateWithPretrainedWeights(self, weights_file):
+        # Load weights if specified by the parameter.
+
+        print("Before")
+        print(self.state_dict())
+        if weights_file != '':
+            logging.info('===> Loading weights: ' + weights_file)
+            state = torch.load(weights_file, map_location=lambda s, l: default_restore_location(s, 'cpu'))
+            matched_weights = load_state_with_same_shape(self, state['state_dict'])
+            model_dict = self.state_dict()
+            model_dict.update(matched_weights)
+            self.load_state_dict(model_dict)
+            print("After")
+            print(self.state_dict())
+        else:
+            logging.info('Weights file name was empty')

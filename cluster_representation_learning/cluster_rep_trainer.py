@@ -30,6 +30,7 @@ def single_proc_run(config):
   num_feats=1 # LiDAR just has reflectance/intensity
   model = ClusterLabelModel(num_feats, config.net.model_n_out, config, D=3)
   print(model)
+  model.updateWithPretrainedWeights(config.net.weights)
 
 if __name__ == "__main__":
   os.environ['MKL_THREADING_LAYER'] = 'GNU'
