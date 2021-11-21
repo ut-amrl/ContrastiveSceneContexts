@@ -34,8 +34,6 @@ class ClusterLabelModel(MinkowskiNetwork):
     def __init__(self, in_channels, out_channels, config, D=3, **kwargs):
         assert self.BLOCK is not None
         assert self.OUT_PIXEL_DIST > 0
-        print("D:")
-        print(D)
         MinkowskiNetwork.__init__(self, D)
         # super(MinkowskiNetwork, self).__init__(D)
         self.in_channels = in_channels
@@ -198,7 +196,8 @@ class ClusterLabelModel(MinkowskiNetwork):
         self.global_avg_pool = ME.MinkowskiGlobalAvgPooling()
 
         self.final = nn.Sequential(
-            self.get_mlp_block(self.LAYERS[3] * 2, config.net.mlp_dim),
+            # self.get_mlp_block(self.LAYERS[3] * 2, config.net.mlp_dim),
+            self.get_mlp_block(512, config.net.mlp_dim), # TODO figure out how to not have this hard coded (derive from the other params)
             ME.MinkowskiDropout(),
             self.get_mlp_block(config.net.mlp_dim, config.net.mlp_dim),
             ME.MinkowskiLinear(config.net.mlp_dim, out_channels, bias=True)
