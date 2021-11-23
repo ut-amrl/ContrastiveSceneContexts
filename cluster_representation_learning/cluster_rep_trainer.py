@@ -6,11 +6,13 @@ import hydra
 import os
 import logging
 
-import lib.multiprocessing_utils as mpu
+import lib.unoriginal.multiprocessing_utils as mpu
 import numpy as np
 import MinkowskiEngine as ME
 
 from lib.test_data_loader import createDataLoader, TestDataset
+from lib.train_data_loader import createTrainingDataLoader, TrainDataset
+from lib.contrastive_trainer import NPairLossClusterTrainer
 
 torch.manual_seed(0)
 torch.cuda.manual_seed(0)
@@ -36,8 +38,13 @@ def single_proc_run(config):
   model = model.double()
   print(model)
   model.updateWithPretrainedWeights(config.net.weights)
-  datafiles = [config.misc.test_file1, config.misc.test_file2]
-  test(datafiles, model, config)
+  # datafiles = [config.misc.test_file1, config.misc.test_file2, config.misc.test_file3]
+  # test(datafiles, model, config)
+  testFileName = "/home/amanda/Documents/scratch/contrastive_pairs.csv"
+  testTrainer(model, config, testFileName)
+  # trainingDataLoader = createTrainingDataLoader("/home/amanda/Downloads/testFile2.csv", config.data.voxel_size, config.data.batch_size)
+
+
 
 
 def test(testFiles, model, config):
@@ -55,6 +62,10 @@ def test(testFiles, model, config):
       output.append(outForBatch)
   print("Output")
   print(output[0].F)
+
+def testTrainer(model, config, datafiles):
+  trainer = NPairLossClusterTrainer(config, createTrainingDataLoader(datafiles, config.data.voxel_size, config.data.batch_size))
+  trainer.train()
 
 
 if __name__ == "__main__":

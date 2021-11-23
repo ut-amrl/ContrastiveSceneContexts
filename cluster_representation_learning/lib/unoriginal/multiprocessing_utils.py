@@ -11,9 +11,9 @@
 import multiprocessing as mp
 import traceback
 
-from lib.error_handler import ErrorHandler
+from lib.unoriginal.error_handler import ErrorHandler
 
-import lib.distributed as du
+import lib.unoriginal.distributed as du
 
 
 def run(proc_rank, world_size, error_queue, fun, fun_args, fun_kwargs):

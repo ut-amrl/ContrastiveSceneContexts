@@ -12,8 +12,8 @@ import time
 import torch
 import numpy as np
 from omegaconf import OmegaConf
-from lib.pc_utils import colorize_pointcloud, save_point_cloud
-from lib.distributed import get_world_size
+from lib.unoriginal.pc_utils import colorize_pointcloud, save_point_cloud
+from lib.unoriginal.distributed import get_world_size
 
 def load_state_with_same_shape(model, weights):
   # weights['conv1.kernel'] = weights['conv1.kernel'].repeat([1,3,1])/3.0

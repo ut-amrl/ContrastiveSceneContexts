@@ -14,7 +14,7 @@ from MinkowskiEngine import MinkowskiNetwork
 
 from model.common import ConvType, NormType, get_norm, conv, sum_pool
 from model.resnet_block import BasicBlock, Bottleneck
-from lib.utils import checkpoint, precision_at_one, Timer, AverageMeter, get_prediction, load_state_with_same_shape, count_parameters
+from lib.unoriginal.utils import checkpoint, precision_at_one, Timer, AverageMeter, get_prediction, load_state_with_same_shape, count_parameters
 
 import logging
 
