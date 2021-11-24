@@ -33,10 +33,8 @@ def load_state(model, weights, lenient_weight_loading=False):
   _model.load_state_dict(weights, strict=True)
 
 class ClusterContrastiveLossTrainer:
-    def __init__(self, config, data_loader):
-        # TODO uncomment
-        # assert config.misc.use_gpu and torch.cuda.is_available(), "DDP mode must support GPU"
-        self.num_feats = 1
+    def __init__(self, initial_model, config, data_loader):
+        assert config.misc.use_gpu and torch.cuda.is_available(), "DDP mode must support GPU"
         self.stat_freq = config.trainer.stat_freq
         self.lr_update_freq = config.trainer.lr_update_freq
         self.checkpoint_freq = config.trainer.checkpoint_freq
@@ -44,16 +42,10 @@ class ClusterContrastiveLossTrainer:
         self.is_master = du.is_master_proc(config.misc.num_gpus) if config.misc.num_gpus > 1 else True
 
         # Model initialization
-        # TODO uncomment
-        # self.cur_device = torch.cuda.current_device()
-        model = ClusterLabelModel(
-            self.num_feats,
-            config.net.model_n_out,
-            config,
-            D=3)
+        self.cur_device = torch.cuda.current_device()
+        model = initial_model
 
-        # TODO uncomment
-        # model = model.cuda(device=self.cur_device)
+        model = model.cuda(device=self.cur_device)
         if config.misc.num_gpus > 1:
             model = torch.nn.parallel.DistributedDataParallel(
                 module=model,
@@ -75,10 +67,6 @@ class ClusterContrastiveLossTrainer:
         self.curr_iter = 0
         self.batch_size = data_loader.batch_size
         self.data_loader = data_loader
-
-        # TODO are these needed?
-        self.neg_thresh = config.trainer.neg_thresh
-        self.pos_thresh = config.trainer.pos_thresh
 
         # ---------------- optional: resume checkpoint by given path ----------------------
         if config.net.weights:
@@ -181,44 +169,44 @@ class NPairLossClusterTrainer(ClusterContrastiveLossTrainer):
         # posSampleMat = torch.cat((posFeatA, posFeatB), 0)
         # negPosDots = torch.mm(posSampleMat, negativeFeats)
         # negPosDotsExp = torch.exp(negPosDots)
-        print("Computing feat A dot with negs")
-        print(torch.unsqueeze(posFeatA, 0))
-        print(negativeFeats)
+        # print("Computing feat A dot with negs")
+        # print(torch.unsqueeze(posFeatA, 0))
+        # print(negativeFeats)
         negPosDotsA = torch.mm(torch.unsqueeze(posFeatA, 0), negativeFeats)
-        print("Computing feat B dot with negs")
-        print(negPosDotsA)
+        # print("Computing feat B dot with negs")
+        # print(negPosDotsA)
         negPosDotsB = torch.mm(torch.unsqueeze(posFeatB, 0), negativeFeats)
-        print(negPosDotsB)
+        # print(negPosDotsB)
         negPosDotsExpA = torch.exp(negPosDotsA)
         negPosDotsExpB = torch.exp(negPosDotsB)
-        print("Neg exp")
-        print(negPosDotsExpA)
-        print(negPosDotsExpB)
+        # print("Neg exp")
+        # print(negPosDotsExpA)
+        # print(negPosDotsExpB)
 
         posSampleDotExp = torch.exp(torch.dot(posFeatA, posFeatB))
-        print("Pos feats")
-        print(torch.dot(posFeatA, posFeatB))
-        print(posSampleDotExp)
+        # print("Pos feats")
+        # print(torch.dot(posFeatA, posFeatB))
+        # print(posSampleDotExp)
 
         lossANegExpSum = torch.sum(negPosDotsExpA)
         lossBNegExpSum = torch.sum(negPosDotsExpB)
-        print("Neg sums")
-        print(lossANegExpSum)
-        print(lossBNegExpSum)
-        print("Loss quantities")
+        # print("Neg sums")
+        # print(lossANegExpSum)
+        # print(lossBNegExpSum)
+        # print("Loss quantities")
         lossAInside = torch.div(posSampleDotExp, torch.add(posSampleDotExp, lossANegExpSum))
-        print(lossAInside)
+        # print(lossAInside)
         lossBInside = torch.div(posSampleDotExp, torch.add(posSampleDotExp, lossBNegExpSum))
-        print(lossBInside)
+        # print(lossBInside)
 
         # May need to squeeze some of these... want result to be scalar
         loss = -torch.log(lossAInside) - torch.log(lossBInside)
-        print(loss)
+        # print(loss)
         return loss
 
 
     def trainIter(self, data_loader_iter, timers):
-        print("HERE!")
+        # print("HERE!")
         data_meter, data_timer, total_timer = timers
         self.optimizer.zero_grad()
         batch_loss = {
@@ -230,13 +218,12 @@ class NPairLossClusterTrainer(ClusterContrastiveLossTrainer):
         data_timer.tic()
         input_dict = data_loader_iter.next()
         data_time += data_timer.toc(average=False)
-        # TODO replace
-        # modelInput = ME.SparseTensor(coords=input_dict[0], feats=input_dict[1])
         modelInput = ME.SparseTensor(feats=input_dict['feats'], coords=input_dict['coords'])
         self.model = self.model.double()
         modelOut = self.model(modelInput)
         modelOut = modelOut.F
-        print(modelOut)
+        # print(modelOut)
+        # print(modelOut.shape)
 
         # Need to extract positive and negative sample pairs
         posCorrespondences = input_dict['posMatches']
@@ -244,13 +231,13 @@ class NPairLossClusterTrainer(ClusterContrastiveLossTrainer):
         # posCorrespondences = torch.Tensor([2, -1, 0]).long()
         # posCorrespondences = torch.Tensor([2, -1, -1]).long()
         evalIndices = torch.nonzero(posCorrespondences != -1, as_tuple=False).squeeze(dim=1)
-        print("Eval indices")
-        print(evalIndices)
+        # print("Eval indices")
+        # print(evalIndices)
         # Get entries corresponding to eval indices
 
         numPairs = evalIndices.size(dim=0)
-        print("Num pairs")
-        print(numPairs)
+        # print("Num pairs")
+        # print(numPairs)
 
         negCorrespondences = input_dict['negMatches']
         # negCorrespondences = [[1], [0, 1]]
@@ -258,26 +245,26 @@ class NPairLossClusterTrainer(ClusterContrastiveLossTrainer):
         loss = 0 # TODO Is this a fair way to initialize this?
         # TODO is there a way to do this without a for loop?
         for i in range(numPairs):
-            print(modelOut)
-            print("I: " + str(i))
+            # print(modelOut)
+            # print("I: " + str(i))
             featAIndex = evalIndices[i].squeeze()
-            print("Feat A index " + str(featAIndex))
+            # print("Feat A index " + str(featAIndex))
             featA = modelOut[featAIndex]
-            print(featA)
+            # print(featA)
             featBIndex = posCorrespondences[featAIndex]
-            print("Feat B index " + str(featBIndex))
+            # print("Feat B index " + str(featBIndex))
             featB = modelOut[featBIndex]
-            print(featB)
+            # print(featB)
 
             # negFeatIndices = negCorrespondences[i]
             negFeatIndices = torch.tensor(negCorrespondences[featAIndex]).long()
-            print("Neg indices")
-            print(negFeatIndices)
-            negFeats = torch.index_select(modelOut, 0, negFeatIndices) # TODO get the negative features as row vectors in modelOut
-            print("Neg feats")
-            print(negFeats)
+            # print("Neg indices")
+            # print(negFeatIndices)
+            negFeats = torch.index_select(modelOut, 0, negFeatIndices)
+            # print("Neg feats")
+            # print(negFeats)
             negFeats = negFeats.transpose(0, 1)
-            print(negFeats)
+            # print(negFeats)
 
             # TODO Can we do this?
             loss += self.computeLoss(featA, featB, negFeats)
@@ -295,8 +282,8 @@ class NPairLossClusterTrainer(ClusterContrastiveLossTrainer):
 
         self.optimizer.step()
 
-        # TODO uncomment
-        # torch.cuda.empty_cache()
+
+        torch.cuda.empty_cache()
         total_timer.toc()
         data_meter.update(data_time)
         return batch_loss

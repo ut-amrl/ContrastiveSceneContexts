@@ -38,33 +38,30 @@ def single_proc_run(config):
   model = model.double()
   print(model)
   model.updateWithPretrainedWeights(config.net.weights)
-  # datafiles = [config.misc.test_file1, config.misc.test_file2, config.misc.test_file3]
-  # test(datafiles, model, config)
-  testFileName = "/home/amanda/Documents/scratch/contrastive_pairs.csv"
-  testTrainer(model, config, testFileName)
+  testTrainer(model, config, config.data.dataset_file)
   # trainingDataLoader = createTrainingDataLoader("/home/amanda/Downloads/testFile2.csv", config.data.voxel_size, config.data.batch_size)
 
 
 
+#
+# def test(testFiles, model, config):
+#   dataLoader =  createDataLoader(testFiles, config.data.voxel_size, config.data.batch_size)
+#   model.eval()
+#   output = []
+#
+#   with torch.no_grad():
+#     for batch in dataLoader:
+#       coords = batch[0]
+#       feats = batch[1]
+#       tensor = ME.SparseTensor(coords=coords, feats=feats)
+#
+#       outForBatch = model(tensor)
+#       output.append(outForBatch)
+#   print("Output")
+#   print(output[0].F)
 
-def test(testFiles, model, config):
-  dataLoader =  createDataLoader(testFiles, config.data.voxel_size, config.data.batch_size)
-  model.eval()
-  output = []
-
-  with torch.no_grad():
-    for batch in dataLoader:
-      coords = batch[0]
-      feats = batch[1]
-      tensor = ME.SparseTensor(coords=coords, feats=feats)
-
-      outForBatch = model(tensor)
-      output.append(outForBatch)
-  print("Output")
-  print(output[0].F)
-
-def testTrainer(model, config, datafiles):
-  trainer = NPairLossClusterTrainer(config, createTrainingDataLoader(datafiles, config.data.voxel_size, config.data.batch_size))
+def testTrainer(model, config, datasetTopFile):
+  trainer = NPairLossClusterTrainer(model, config, createTrainingDataLoader(datasetTopFile, config.data.voxel_size, config.data.batch_size))
   trainer.train()
 
 

@@ -83,7 +83,7 @@ misc:
 
 # Dataset specific configurations
 data:
-  dataset: ScanNetMatchPairDataset
+  dataset_file: /home/amanda/Documents/scratch/contrastive_pairs.csv
   voxel_size: 0.025
   voxelize: False
   num_points: 40000

@@ -44,8 +44,8 @@ class TrainDataset(Dataset):
     def __getitem__(self, i):
         # TODO do we want to load things into file or cache them or just read from file as needed
         sampleGroup = self.sampleGroups[i]
-        print("Sample group!")
-        print(sampleGroup)
+        # print("Sample group!")
+        # print(sampleGroup)
         posCloudCoordsA = self.pointCloudCoords[sampleGroup[0]]
         posCloudFeatsA = self.pointCloudFeats[sampleGroup[0]]
 
@@ -73,12 +73,12 @@ def collateTrainingData(training_data_entries):
     # negSamples - List with each entry as a tuple of (coord, feature) for the negative entries
     posCloudCoordsAs, posCloudFeatsAs, posCloudCoordsBs, posCloudFeatsBs, negSamplesList = list(zip(*training_data_entries))
 
-    print("Batch size!")
-    print(len(posCloudCoordsAs))
-    print([len(sublist) for sublist in negSamplesList])
+    # print("Batch size!")
+    # print(len(posCloudCoordsAs))
+    # print([len(sublist) for sublist in negSamplesList])
 
-    feats = [] # TODO
-    coords = [] # TODO
+    feats = []
+    coords = []
     posCoordsList = []
     negSamplesBatchIdsList = []
 
@@ -87,8 +87,8 @@ def collateTrainingData(training_data_entries):
     for batchId, posCloudCoordA in enumerate(posCloudCoordsAs):
         N0 = posCloudCoordsAs[batchId].shape[0]
         N1 = posCloudCoordsBs[batchId].shape[0]
-        print("N0 for batch " + str(batchId) + ": " + str(N0))
-        print("N1 for batch " + str(batchId) + ": " + str(N1))
+        # print("N0 for batch " + str(batchId) + ": " + str(N0))
+        # print("N1 for batch " + str(batchId) + ": " + str(N1))
 
         # For every set (2 positive and M negative) we need to have one entry that gives the index of the positive coordinates
         posCoordsList.append(nextBatchNum + 1)
@@ -119,7 +119,7 @@ def collateTrainingData(training_data_entries):
             negSamplesBatchIds.append(nextBatchNum)
 
             pointCloudSize = negSampleCoords.shape[0]
-            print("Size for batch " + str(batchId) + ": " + str(pointCloudSize))
+            # print("Size for batch " + str(batchId) + ": " + str(pointCloudSize))
 
             # Prepend the coordinates with a batch id
             # This will be different than the processing batch -- each point cloud we process gets its own index
@@ -138,23 +138,23 @@ def collateTrainingData(training_data_entries):
 
     feats = torch.cat(feats, 0).double()
     coords = torch.cat(coords, 0).double()
-    print("Coords")
-    print(coords)
-    print("Pos coords list!")
-    print(posCoordsList)
+    # print("Coords")
+    # print(coords)
+    # print("Pos coords list!")
+    # print(posCoordsList)
     posCoordsList = torch.Tensor(posCoordsList).long()
-    print("Neg list")
-    print(negSamplesBatchIdsList)
+    # print("Neg list")
+    # print(negSamplesBatchIdsList)
 
     return {
-        'feats':feats, # TODO,
-        'coords':coords, # TODO
-        'posMatches':posCoordsList, #TODO
-        'negMatches':negSamplesBatchIdsList # TODO
+        'feats':feats,
+        'coords':coords,
+        'posMatches':posCoordsList,
+        'negMatches':negSamplesBatchIdsList
     }
 
 def createTrainingDataLoader(matchesFileName, voxelSize, batchSize):
-    print("Creating training data set")
+    # print("Creating training data set")
     trainingDataSet = TrainDataset(matchesFileName, voxelSize, batchSize)
-    print("Creating training data loader")
+    # print("Creating training data loader")
     return DataLoader(trainingDataSet, batchSize, shuffle=True, collate_fn=collateTrainingData)
