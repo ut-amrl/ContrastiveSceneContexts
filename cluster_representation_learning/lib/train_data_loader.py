@@ -3,6 +3,7 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import MinkowskiEngine as ME
 from lib.data_loading_utils import loadPointCloudFromFile
+from lib.unoriginal.data_sampler import DistributedInfSampler
 
 import csv
 
@@ -153,8 +154,13 @@ def collateTrainingData(training_data_entries):
         'negMatches':negSamplesBatchIdsList
     }
 
-def createTrainingDataLoader(matchesFileName, voxelSize, batchSize):
+def createTrainingDataLoader(matchesFileName, voxelSize, batchSize, numGpus):
     # print("Creating training data set")
     trainingDataSet = TrainDataset(matchesFileName, voxelSize, batchSize)
+    if (numGpus > 1):
+        sampler = DistributedInfSampler(trainingDataSet)
+    else:
+        sampler = None
     # print("Creating training data loader")
-    return DataLoader(trainingDataSet, batchSize, shuffle=True, collate_fn=collateTrainingData)
+    shuffle = False if sampler else True
+    return DataLoader(trainingDataSet, batchSize, shuffle=shuffle, collate_fn=collateTrainingData, sampler=sampler)

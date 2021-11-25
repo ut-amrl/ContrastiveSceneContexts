@@ -63,19 +63,20 @@ class ClusterContrastiveLossTrainer:
             momentum=config.opt.momentum,
             weight_decay=config.opt.weight_decay)
 
+
         self.scheduler = optim.lr_scheduler.ExponentialLR(self.optimizer, config.opt.exp_gamma)
         self.curr_iter = 0
         self.batch_size = data_loader.batch_size
         self.data_loader = data_loader
 
         # ---------------- optional: resume checkpoint by given path ----------------------
-        if config.net.weights:
+        if config.net.finetuned_weights and os.path.isfile(config.net.finetuned_weights):
             if self.is_master:
-                logging.info('===> Loading weights: ' + config.net.weight)
-            state = torch.load(config.net.weight, map_location=lambda s, l: default_restore_location(s, 'cpu'))
+                logging.info('===> Loading weights: ' + config.net.finetuned_weights)
+            state = torch.load(config.net.finetuned_weights, map_location=lambda s, l: default_restore_location(s, 'cpu'))
             load_state(model, state['state_dict'], config.misc.lenient_weight_loading)
             if self.is_master:
-                logging.info('===> Loaded weights: ' + config.net.weight)
+                logging.info('===> Loaded weights: ' + config.net.finetuned_weights)
 
         # ---------------- default: resume checkpoint in current folder ----------------------
         checkpoint_fn = 'weights/weights.pth'
@@ -218,7 +219,7 @@ class NPairLossClusterTrainer(ClusterContrastiveLossTrainer):
         data_timer.tic()
         input_dict = data_loader_iter.next()
         data_time += data_timer.toc(average=False)
-        modelInput = ME.SparseTensor(feats=input_dict['feats'], coords=input_dict['coords'])
+        modelInput = ME.SparseTensor(feats=input_dict['feats'].to(self.cur_device), coords=input_dict['coords'].to(self.cur_device))
         self.model = self.model.double()
         modelOut = self.model(modelInput)
         modelOut = modelOut.F
@@ -226,7 +227,7 @@ class NPairLossClusterTrainer(ClusterContrastiveLossTrainer):
         # print(modelOut.shape)
 
         # Need to extract positive and negative sample pairs
-        posCorrespondences = input_dict['posMatches']
+        posCorrespondences = input_dict['posMatches'].to(self.cur_device)
         # Find all indices where value isn't -1
         # posCorrespondences = torch.Tensor([2, -1, 0]).long()
         # posCorrespondences = torch.Tensor([2, -1, -1]).long()
@@ -257,7 +258,7 @@ class NPairLossClusterTrainer(ClusterContrastiveLossTrainer):
             # print(featB)
 
             # negFeatIndices = negCorrespondences[i]
-            negFeatIndices = torch.tensor(negCorrespondences[featAIndex]).long()
+            negFeatIndices = torch.tensor(negCorrespondences[featAIndex]).long().to(self.cur_device)
             # print("Neg indices")
             # print(negFeatIndices)
             negFeats = torch.index_select(modelOut, 0, negFeatIndices)
@@ -271,8 +272,8 @@ class NPairLossClusterTrainer(ClusterContrastiveLossTrainer):
 
         # TODO Compute loss
 
-        print("Final loss")
-        print(loss)
+        #print("Final loss")
+        #print(loss)
         loss.backward()
 
         result = {"loss": loss}

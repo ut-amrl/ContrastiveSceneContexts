@@ -6,7 +6,7 @@ defaults:
 trainer:
   trainer: ContrastiveLossTrainer
   overwrite_checkpoint: False
-  batch_size: 4
+  batch_size: 32
 
   # Metric learning loss
   neg_thresh: 1.4
@@ -22,7 +22,8 @@ trainer:
 # Network specific configurations
 net:
   model: Res16UNet34C
-  weights:
+  pretrained_weights:
+  finetuned_weights: 
   model_n_out: 32 #Feature dimension
   conv1_kernel_size: 3
   normalize_feature: True
@@ -55,10 +56,13 @@ shape_context:
 misc:
   out_dir: /checkpoint/jihou/checkpoints/default
 #  test_file: /robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/00/sem_kitti_cluster_00_scan1949_inst655370_semClass10_points.npy
-#  test_file: /home/amanda/datasets/kitti_odometry/cluster_rep_learning_data/00/sem_kitti_cluster_00_scan1949_inst655370_semClass10_points.npy
-  test_file1: /home/amanda/datasets/kitti_odometry/cluster_rep_learning_data/00/sem_kitti_cluster_00_scan2226_inst65554_semClass18_points.npy
-  test_file2: /home/amanda/datasets/kitti_odometry/cluster_rep_learning_data/00/sem_kitti_cluster_00_scan1949_inst655370_semClass10_points.npy
-  test_file3: /home/amanda/datasets/kitti_odometry/cluster_rep_learning_data/01/sem_kitti_cluster_01_scan428_inst14483708_semClass252_points.npy
+  test_file1: /robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/00/sem_kitti_cluster_00_scan2226_inst65554_semClass18_points.npy
+  test_file2: /robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/00/sem_kitti_cluster_00_scan1949_inst655370_semClass10_points.npy
+  test_file3: /robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/01/sem_kitti_cluster_01_scan428_inst14483708_semClass252_points.npy
+  
+  #test_file1: /home/amanda/datasets/kitti_odometry/cluster_rep_learning_data/00/sem_kitti_cluster_00_scan2226_inst65554_semClass18_points.npy
+  #test_file2: /home/amanda/datasets/kitti_odometry/cluster_rep_learning_data/00/sem_kitti_cluster_00_scan1949_inst655370_semClass10_points.npy
+  #test_file3: /home/amanda/datasets/kitti_odometry/cluster_rep_learning_data/01/sem_kitti_cluster_01_scan428_inst14483708_semClass252_points.npy
   use_gpu: True
   num_gpus: 1
   lenient_weight_loading: False # Weights with the same size will be loaded
@@ -83,7 +87,7 @@ misc:
 
 # Dataset specific configurations
 data:
-  dataset_file: /home/amanda/Documents/scratch/contrastive_pairs.csv
+  dataset_file: /robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/contrastiveLearningGroups/testExample10000groups.csv
   voxel_size: 0.025
   voxelize: False
   num_points: 40000

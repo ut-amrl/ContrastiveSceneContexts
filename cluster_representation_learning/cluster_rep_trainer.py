@@ -37,7 +37,7 @@ def single_proc_run(config):
   model = ClusterLabelModel(num_feats, config.net.model_n_out, config, D=3)
   model = model.double()
   print(model)
-  model.updateWithPretrainedWeights(config.net.weights)
+  model.updateWithPretrainedWeights(config.net.pretrained_weights)
   testTrainer(model, config, config.data.dataset_file)
   # trainingDataLoader = createTrainingDataLoader("/home/amanda/Downloads/testFile2.csv", config.data.voxel_size, config.data.batch_size)
 
@@ -61,7 +61,7 @@ def single_proc_run(config):
 #   print(output[0].F)
 
 def testTrainer(model, config, datasetTopFile):
-  trainer = NPairLossClusterTrainer(model, config, createTrainingDataLoader(datasetTopFile, config.data.voxel_size, config.data.batch_size))
+  trainer = NPairLossClusterTrainer(model, config, createTrainingDataLoader(datasetTopFile, config.data.voxel_size, config.data.batch_size, config.misc.num_gpus))
   trainer.train()
 
 
