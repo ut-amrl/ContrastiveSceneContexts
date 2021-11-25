@@ -3,6 +3,7 @@ import csv
 import random
 import argparse
 import glob
+import numpy as np
 
 def getSemanticClassGroups():
     semanticClassList = [
@@ -29,17 +30,31 @@ def getSemanticClassGroups():
 def getTrainingSequences():
     return ["00", "01", "02", "03", "04", "05"]
 
-def getAllTrainingFilesForSequence(datasetDir, sequence):
+def getAllTrainingFilesForSequence(datasetDir, sequence, minPoints):
     seqDir = os.path.join(datasetDir, sequence)
     searchPattern = seqDir + "/*points.npy"
     files = glob.glob(searchPattern)
-    return files
 
-def getAllTrainingFiles(datasetDir):
+    if (minPoints > 0):
+        keepFiles = []
+        numExcludedForSeq = 0
+        for fileName in files:
+            coordsWithFeats = np.load(fileName)
+            if (coordsWithFeats.shape[0] < minPoints):
+                numExcludedForSeq += 1
+            else:
+                keepFiles.append(fileName)
+        print("Sequence " + sequence + ": Excluded " + str(numExcludedForSeq) + " files because they had less than " + str(minPoints))
+        print("Kept " + str(len(keepFiles)) + " files")
+        return keepFiles
+    else:
+        return files
+
+def getAllTrainingFiles(datasetDir, minPoints):
     trainingSeqs = getTrainingSequences()
     trainingFiles = []
     for seqNum in trainingSeqs:
-        trainingFiles.extend(getAllTrainingFilesForSequence(datasetDir, seqNum))
+        trainingFiles.extend(getAllTrainingFilesForSequence(datasetDir, seqNum, minPoints))
 
     return trainingFiles
 
@@ -48,9 +63,9 @@ def extractSemanticClassFromFileName(fileName):
     semClassComponent = basename.split('_')[-2]
     return int(semClassComponent.replace('semClass', ''))
 
-def generatePairs(numPairsToGenerate, numNegativeEntriesPerPair, datasetDir):
+def generatePairs(numPairsToGenerate, numNegativeEntriesPerPair, datasetDir, minPoints):
 
-    trainingFiles = getAllTrainingFiles(datasetDir)
+    trainingFiles = getAllTrainingFiles(datasetDir, minPoints)
 
     semanticClassGroupList, semanticClassGroupDict = getSemanticClassGroups()
 
@@ -131,11 +146,19 @@ def argParser():
         default="./output_file.csv",
         help='Output %(default)s',
     )
+    parser.add_argument(
+        '--min_points_in_inst', '-m',
+        dest='min_points',
+        type=int,
+        required=False,
+        default=0,
+        help='Minimum points in an instance for the file to be used',
+    )
     return parser.parse_known_args()
 
 if __name__ == "__main__":
     FLAGS, unparsed = argParser()
 
-    sampleGroups = generatePairs(FLAGS.num_sample_pairs, FLAGS.num_neg_samples_per_entry, FLAGS.dataset_root)
+    sampleGroups = generatePairs(FLAGS.num_sample_pairs, FLAGS.num_neg_samples_per_entry, FLAGS.dataset_root, FLAGS.min_points)
     writeSampleGroups(sampleGroups, FLAGS.output_file)
 
