@@ -23,4 +23,4 @@ class TestDataset(Dataset):
 def createDataLoader(datafiles, voxelSize, batchSize):
     testDataSet = TestDataset(datafiles, voxelSize)
 
-    return DataLoader(testDataSet, batchSize, collate_fn=ME.utils.batch_sparse_collate)
+    return DataLoader(testDataSet, batchSize, shuffle=False, collate_fn=ME.utils.batch_sparse_collate)
