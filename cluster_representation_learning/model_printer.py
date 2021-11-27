@@ -30,7 +30,7 @@ def single_proc_run(config):
   model = ClusterLabelModel(num_feats, config.net.model_n_out, config, D=3)
   model = model.double()
   print(model)
-  model.updateWithPretrainedWeights(config.net.weights)
+  model.updateWithPretrainedWeights(config.net.pretrained_weights)
 
 if __name__ == "__main__":
   os.environ['MKL_THREADING_LAYER'] = 'GNU'
