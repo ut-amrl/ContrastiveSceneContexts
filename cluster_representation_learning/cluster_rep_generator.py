@@ -35,13 +35,14 @@ def main(config):
 def loadEvalFilesFromFile(highLevelFileName):
     with open(highLevelFileName, newline='') as highLevelFile:
         subfiles = highLevelFile.readlines()
-        return subfiles
+        return [subfile.strip() for subfile in subfiles]
 
 def test(testFiles, model, config):
   dataLoader =  createDataLoader(testFiles, config.data.voxel_size, config.data.batch_size)
   model.eval()
   output = []
 
+  lastOutput = 0
   with torch.no_grad():
     for batch in dataLoader:
       coords = batch[0]
@@ -49,12 +50,15 @@ def test(testFiles, model, config):
       tensor = ME.SparseTensor(coords=coords, feats=feats)
 
       outForBatch = model(tensor)
-      for i in range(len(outForBatch.shape[0])):
-          # TODO might need to do more conversion to get this in right format
-          output.append(outForBatch[i, :])
+      outFeats = outForBatch.F
+      for i in range(outForBatch.shape[0]):
+          output.append(outFeats[i, :].numpy())
+      numProcessed = len(output)
+      if (numProcessed > lastOutput + 1000):
+          print("Processed " + str(numProcessed))
+          lastOutput = numProcessed
 
-  print("Output")
-  print(output[0].F)
+  return output
 
 
 def outputResults(resultsFileName, testFiles, labels):
@@ -70,7 +74,6 @@ def single_proc_run(config):
   num_feats=1 # LiDAR just has reflectance/intensity
   model = ClusterLabelModel(num_feats, config.net.model_n_out, config, D=3)
   model = model.double()
-  print(model)
   # TODO  need to verify that this can fully load model
   model.updateWithPretrainedWeights(config.net.pretrained_weights)
 
