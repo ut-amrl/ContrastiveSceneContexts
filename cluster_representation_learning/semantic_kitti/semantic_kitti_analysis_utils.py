@@ -24,30 +24,54 @@ def getSemanticClassGroups():
 
     return semanticClassList, semanticClassDict
 
+def getLabelsForClassIndices():
+    semanticClassLabelsList = [
+        "Car",
+        "Bike",
+        "Bus",
+        "Motorcycle",
+        "On rails",
+        "Truck",
+        "Other Vehicle",
+        "Person",
+        "Bicyclist",
+        "Motorcyclist"
+    ]
+    return semanticClassLabelsList
+
+def getLabelForClassNum(classNum):
+    _, semanticClassDict = getSemanticClassGroups()
+    return getLabelsForClassIndices()[semanticClassDict[classNum]]
+
 def extractSemanticClassFromFileName(fileName):
     basename = os.path.basename(fileName)
     semClassComponent = basename.split('_')[-2]
     return int(semClassComponent.replace('semClass', ''))
+
+def getFilesOverMinPoints(filesList, minPoints):
+    if (minPoints == 0):
+        return filesList, 0
+
+    keepFiles = []
+    numExcluded = 0
+    for fileName in filesList:
+        coordsWithFeats = np.load(fileName)
+        if (coordsWithFeats.shape[0] < minPoints):
+            numExcluded += 1
+        else:
+            keepFiles.append(fileName)
+    return keepFiles, numExcluded
 
 def getAllPointCloudFilesForSequence(datasetDir, sequence, minPoints):
     seqDir = os.path.join(datasetDir, sequence)
     searchPattern = seqDir + "/*points.npy"
     files = glob.glob(searchPattern)
 
-    if (minPoints > 0):
-        keepFiles = []
-        numExcludedForSeq = 0
-        for fileName in files:
-            coordsWithFeats = np.load(fileName)
-            if (coordsWithFeats.shape[0] < minPoints):
-                numExcludedForSeq += 1
-            else:
-                keepFiles.append(fileName)
-        print("Sequence " + sequence + ": Excluded " + str(numExcludedForSeq) + " files because they had less than " + str(minPoints))
-        print("Kept " + str(len(keepFiles)) + " files")
-        return keepFiles
-    else:
-        return files
+    keepFiles, numExcluded = getFilesOverMinPoints(files, minPoints)
+
+    print("Sequence " + sequence + ": Excluded " + str(numExcluded) + " files because they had less than " + str(minPoints))
+    print("Kept " + str(len(keepFiles)) + " files")
+    return keepFiles
 
 def getAllPointCloudFilesForSequences(datasetDir, minPoints, sequences):
     pointCloudFiles = []

@@ -64,6 +64,7 @@ def getIntraClassDistances(samplesForSameClassGroup, numIntraClassComparisons):
     maximumPossibleComparisons = (numSamples * (numSamples - 1)) / 2
     featureDists = []
     if (numIntraClassComparisons > maximumPossibleComparisons):
+        print("Using all possible for intraclass")
         for i in range(numSamples):
             for j in range(numSamples):
                 if (i != j):
@@ -87,6 +88,7 @@ def getInterClassDistances(samplesForSameClassGroup, samplesForOtherClassGroups,
 
     featureDists = []
     if (numInterClassComparisons > maximumPossibleComparisons):
+        print("Using all possible for interclass")
         for targetClassPointCloudFile, targetClassFeature in samplesForSameClassGroup:
             for otherClassPointCloudFile, otherClassFeature in samplesForSameClassGroup:
                 featureDists.append(computeSampleDistance(targetClassFeature, otherClassFeature))
@@ -133,6 +135,7 @@ def plotCDFs(intraClassDistances, interClassDistances, bins=80):
     plt.title("Distances between features of the same class and different classes")
     plt.xlabel("Feature distance")
     plt.ylabel("Proportion of data")
+    plt.show()
 
 if __name__ == "__main__":
     FLAGS, unparsed = argParser()
@@ -150,6 +153,9 @@ if __name__ == "__main__":
     resultsWithFileNames = readResults(resultsFile)
 
     samplesForSameClassGroup, samplesForOtherClassGroup = getSamplesForAndNotForClass(resultsWithFileNames, targetClassGroupIndex, semanticClassDict)
+    print(len(samplesForSameClassGroup))
+    print("Samples for other class group")
+    print(len(samplesForOtherClassGroup))
 
     intraClassDistances = getIntraClassDistances(samplesForSameClassGroup, numMatchingSamples)
     interClassDistances = getInterClassDistances(samplesForSameClassGroup, samplesForOtherClassGroup, numNegativeSamples)
