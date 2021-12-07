@@ -16,13 +16,13 @@ from lib.unoriginal.error_handler import ErrorHandler
 import lib.unoriginal.distributed as du
 
 
-def run(proc_rank, world_size, error_queue, fun, fun_args, fun_kwargs):
+def run(proc_rank, world_size, port, error_queue, fun, fun_args, fun_kwargs):
     # Initialize the process group
     
     """Runs a function from a child process."""
     try:
         # Initialize the process group
-        du.init_process_group(proc_rank, world_size)
+        du.init_process_group(proc_rank, world_size, port)
         # Run the function
         fun(*fun_args, **fun_kwargs)
     except KeyboardInterrupt:
@@ -36,7 +36,7 @@ def run(proc_rank, world_size, error_queue, fun, fun_args, fun_kwargs):
         du.destroy_process_group()
 
 
-def multi_proc_run(num_proc, fun, fun_args=(), fun_kwargs={}):
+def multi_proc_run(num_proc, fun, port="10001", fun_args=(), fun_kwargs={}):
     """Runs a function in a multi-proc setting."""
 
     # Handle errors from training subprocesses
@@ -48,7 +48,7 @@ def multi_proc_run(num_proc, fun, fun_args=(), fun_kwargs={}):
     for i in range(num_proc):
         p_i = mp.Process(
             target=run,
-            args=(i, num_proc, error_queue, fun, fun_args, fun_kwargs)
+            args=(i, num_proc, port, error_queue, fun, fun_args, fun_kwargs)
         )
         ps.append(p_i)
         p_i.start()

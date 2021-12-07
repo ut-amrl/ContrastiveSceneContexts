@@ -65,6 +65,7 @@ misc:
   #test_file3: /home/amanda/datasets/kitti_odometry/cluster_rep_learning_data/01/sem_kitti_cluster_01_scan428_inst14483708_semClass252_points.npy
   use_gpu: True
   num_gpus: 1
+  port: 10001
   lenient_weight_loading: False # Weights with the same size will be loaded
 
   train_num_thread: 2

@@ -141,14 +141,14 @@ def is_master_proc(num_gpus):
     return num_gpus == 1 or torch.distributed.get_rank() == 0
 
 
-def init_process_group(proc_rank, world_size):
+def init_process_group(proc_rank, world_size, port="10001"):
     """Initializes the default process group."""
     # Set the GPU to use
     torch.cuda.set_device(proc_rank)
     # Initialize the process group
     torch.distributed.init_process_group(
         backend="nccl",
-        init_method="tcp://{}:{}".format("localhost", "10001"),
+        init_method="tcp://{}:{}".format("localhost", port),
         world_size=world_size,
         rank=proc_rank
     )
