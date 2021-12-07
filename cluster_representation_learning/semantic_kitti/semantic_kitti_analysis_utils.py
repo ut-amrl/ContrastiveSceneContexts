@@ -24,6 +24,24 @@ def getSemanticClassGroups():
 
     return semanticClassList, semanticClassDict
 
+
+def getCondensedSemanticClassGroups():
+    semanticClassList = [
+        [10, 252, 18, 258, 20, 259], # Car/Truck/Other vehicle
+        [11, 15, 31, 253, 32, 255], # Bike/Motorcycle/Bicyclist/Motorcyclist
+        [13, 257], # Bus
+        [16, 256], # On rails
+        [30, 254], # Person
+    ]
+
+    semanticClassDict = {}
+    for i in range(len(semanticClassList)):
+        classGroup = semanticClassList[i]
+        for classIndex in classGroup:
+            semanticClassDict[classIndex] = i
+
+    return semanticClassList, semanticClassDict
+
 def getLabelsForClassIndices():
     semanticClassLabelsList = [
         "Car",
@@ -39,9 +57,23 @@ def getLabelsForClassIndices():
     ]
     return semanticClassLabelsList
 
+def getLabelsForCondensedClassIndices():
+    semanticClassLabelsList = [
+        "Car/Truck/OtherVehicle",
+        "Bike/Motorcycle/Bicyclist/Motorcyclist",
+        "Bus",
+        "On rails",
+        "Person"
+    ]
+    return semanticClassLabelsList
+
 def getLabelForClassNum(classNum):
     _, semanticClassDict = getSemanticClassGroups()
     return getLabelsForClassIndices()[semanticClassDict[classNum]]
+
+def getLabelForCondensedClassNum(classNum):
+    _, semanticClassDict = getCondensedSemanticClassGroups()
+    return getLabelsForCondensedClassIndices()[semanticClassDict[classNum]]
 
 def extractSemanticClassFromFileName(fileName):
     basename = os.path.basename(fileName)

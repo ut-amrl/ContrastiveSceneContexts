@@ -2,7 +2,7 @@ import csv
 import random
 import argparse
 
-from semantic_kitti_analysis_utils import getSemanticClassGroups, extractSemanticClassFromFileName, getAllPointCloudFilesForSequences
+from semantic_kitti_analysis_utils import getSemanticClassGroups, extractSemanticClassFromFileName, getAllPointCloudFilesForSequences, getCondensedSemanticClassGroups
 
 def getTrainingSequences():
     return ["00", "01", "02", "03", "04", "05"]
@@ -11,7 +11,8 @@ def generatePairs(numPairsToGenerate, numNegativeEntriesPerPair, datasetDir, min
 
     trainingFiles = getAllPointCloudFilesForSequences(datasetDir, minPoints, getTrainingSequences())
 
-    semanticClassGroupList, semanticClassGroupDict = getSemanticClassGroups()
+    # semanticClassGroupList, semanticClassGroupDict = getSemanticClassGroups()
+    semanticClassGroupList, semanticClassGroupDict = getCondensedSemanticClassGroups()
 
     trainingFilesByClassGroup = [[] for i in range(len(semanticClassGroupList))]
 

@@ -1,7 +1,7 @@
 import numpy as np
 import argparse
 import open3d
-from semantic_kitti_analysis_utils import getSemanticClassGroups, extractSemanticClassFromFileName, getFilesOverMinPoints, getLabelForClassNum
+from semantic_kitti_analysis_utils import getSemanticClassGroups, extractSemanticClassFromFileName, getFilesOverMinPoints, getLabelForClassNum, getCondensedSemanticClassGroups, getLabelForCondensedClassNum
 from multiprocessing import Process
 
 def loadEvalFilesFromFile(highLevelFileName):
@@ -11,8 +11,8 @@ def loadEvalFilesFromFile(highLevelFileName):
 
 def getFilesWithTargetClasses(filesListFileName, targetClass1, targetClass2, minPoints):
     allFiles = loadEvalFilesFromFile(filesListFileName)
-    semanticClassGroupList, semanticClassGroupDict = getSemanticClassGroups()
-
+    # semanticClassGroupList, semanticClassGroupDict = getSemanticClassGroups()
+    semanticClassGroupList, semanticClassGroupDict = getCondensedSemanticClassGroups()
 
     filesByClassGroup = [[] for i in range(len(semanticClassGroupList))]
 
@@ -76,7 +76,8 @@ def argParser():
 
 def displayPointCloud(pointCloudFile):
     semanticClassId = extractSemanticClassFromFileName(pointCloudFile)
-    classLabel = getLabelForClassNum(semanticClassId)
+    # classLabel = getLabelForClassNum(semanticClassId)
+    classLabel = getLabelForCondensedClassNum(semanticClassId)
     pointCloudPointsWithFeats = np.load(pointCloudFile)
     pointCloudPoints = pointCloudPointsWithFeats[:, 0:3]
     pointCloudIntensityGray = pointCloudPointsWithFeats[:, 3]

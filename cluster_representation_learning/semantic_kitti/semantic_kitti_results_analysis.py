@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 import joblib
 
-from semantic_kitti_analysis_utils import getSemanticClassGroups, extractSemanticClassFromFileName
+from semantic_kitti_analysis_utils import getSemanticClassGroups, extractSemanticClassFromFileName, getCondensedSemanticClassGroups
 
 def argParser():
     parser = argparse.ArgumentParser("./semantic_kitti_results_analysis.py")
@@ -146,7 +146,8 @@ if __name__ == "__main__":
     numNegativeSamples = FLAGS.num_negative_samples
 
 
-    semanticClassList, semanticClassDict = getSemanticClassGroups()
+    # semanticClassList, semanticClassDict = getSemanticClassGroups()
+    semanticClassList, semanticClassDict = getCondensedSemanticClassGroups()
 
     targetClassGroupIndex = semanticClassDict[targetClass]
 
