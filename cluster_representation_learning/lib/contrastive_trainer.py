@@ -13,7 +13,7 @@ from omegaconf import OmegaConf
 
 from model.cluster_label_model import ClusterLabelModel
 import lib.unoriginal.distributed as du
-from trainer_base import ClusterTrainer
+from lib.trainer_base import ClusterTrainer
 from lib.unoriginal.timer import Timer, AverageMeter
 
 def load_state(model, weights, lenient_weight_loading=False):

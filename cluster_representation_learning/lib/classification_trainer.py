@@ -5,7 +5,7 @@ import os
 import torch
 import torch.optim as optim
 from torch.serialization import default_restore_location
-from trainer_base import ClusterTrainer
+from lib.trainer_base import ClusterTrainer
 
 import MinkowskiEngine as ME
 
