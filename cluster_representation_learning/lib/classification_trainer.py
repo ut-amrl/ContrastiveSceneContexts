@@ -38,13 +38,12 @@ class ClusterClassificationLossTrainer(ClusterTrainer):
 
     def __init__(self, initial_model, config, data_loader):
 
-        super(ClusterTrainer, self).__init__(initial_model, config, data_loader)
+        ClusterTrainer.__init__(self, initial_model, config, data_loader)
 
         self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-100)
 
 
     def trainIter(self, data_loader_iter, timers):
-        # print("HERE!")
         data_meter, data_timer, total_timer = timers
         self.optimizer.zero_grad()
         batch_loss = {
@@ -55,12 +54,12 @@ class ClusterClassificationLossTrainer(ClusterTrainer):
 
         data_timer.tic()
         coords, feats, labels = data_loader_iter.next()
+        coords = coords.double()
         data_time += data_timer.toc(average=False)
         modelInput = ME.SparseTensor(feats=feats.to(self.cur_device), coords=coords.to(self.cur_device))
         self.model = self.model.double()
         modelOut = self.model(modelInput)
-
-        loss = self.criterion(modelOut.F.squeeze(), labels.long())
+        loss = self.criterion(modelOut.F.squeeze(), labels.to(self.cur_device).long())
         loss.backward()
 
         result = {"loss": loss}

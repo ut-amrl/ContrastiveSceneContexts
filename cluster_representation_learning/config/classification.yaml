@@ -81,7 +81,7 @@ misc:
 # Dataset specific configurations
 data:
   results_out:
-  dataset_file: /robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/contrastiveLearningGroups/testExample9999groups_min75points.csv
+  dataset_file: /robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/contrastiveLearningGroups/classificationTrainListMin300.csv
   voxel_size: 0.025
   voxelize: False
   num_points: 40000

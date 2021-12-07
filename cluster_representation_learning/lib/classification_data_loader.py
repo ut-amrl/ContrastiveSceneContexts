@@ -37,6 +37,9 @@ class ClassificationDataset(Dataset):
                 self.pointCloudFeats.append(feats)
                 self.labels.append(label)
 
+        self.labels = np.stack(self.labels, axis=0)
+        self.labels = np.reshape(self.labels, (len(self.pointCloudCoords), 1))
+
     def __getitem__(self, i):
         return (self.pointCloudCoords[i], self.pointCloudFeats[i], self.labels[i])
 
