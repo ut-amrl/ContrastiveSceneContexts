@@ -12,7 +12,7 @@ import MinkowskiEngine as ME
 
 from lib.test_data_loader import createDataLoader, TestDataset
 from lib.train_data_loader import createTrainingDataLoader, TrainDataset
-from lib.contrastive_trainer import NPairLossClusterTrainer
+from lib.contrastive_trainer import NPairLossClusterTrainer, TripletLossTrainer
 
 torch.manual_seed(0)
 torch.cuda.manual_seed(0)
@@ -61,7 +61,11 @@ def single_proc_run(config):
 #   print(output[0].F)
 
 def testTrainer(model, config, datasetTopFile):
-  trainer = NPairLossClusterTrainer(model, config, createTrainingDataLoader(datasetTopFile, config.data.voxel_size, config.data.batch_size, config.misc.num_gpus))
+  trainingDataLoader = createTrainingDataLoader(datasetTopFile, config.data.voxel_size, config.data.batch_size, config.misc.num_gpus)
+  if (config.trainer.useNPairLoss):
+    trainer = NPairLossClusterTrainer(model, config, trainingDataLoader)
+  else:
+    trainer = TripletLossTrainer(model, config, trainingDataLoader)
   trainer.train()
 
 

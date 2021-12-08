@@ -3,6 +3,8 @@ import logging
 import os
 
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 import torch.optim as optim
 from torch.serialization import default_restore_location
 
@@ -270,6 +272,110 @@ class NPairLossClusterTrainer(ClusterTrainer):
 
             # TODO Can we do this?
             loss += self.computeLoss(featA, featB, negFeats)
+
+        # TODO Compute loss
+
+        #print("Final loss")
+        #print(loss)
+        loss.backward()
+
+        result = {"loss": loss}
+        if self.config.misc.num_gpus > 1:
+            result = du.scaled_all_reduce_dict(result, self.config.misc.num_gpus)
+        batch_loss['loss'] += result["loss"].item()
+
+        self.optimizer.step()
+
+
+        torch.cuda.empty_cache()
+        total_timer.toc()
+        data_meter.update(data_time)
+        return batch_loss
+
+# TODO consider implementing InfoNCELoss
+
+
+class TripletLoss(nn.Module):
+    """
+    Triplet loss
+    Takes embeddings of an anchor sample, a positive sample and a negative sample
+    """
+
+    def __init__(self, margin):
+        super(TripletLoss, self).__init__()
+        self.margin = margin
+
+    def forward(self, anchor, positive, negative, size_average=True):
+        distance_positive = torch.cdist(anchor, positive)  # .pow(.5)
+        distance_negative = torch.cdist(anchor, negative) # .pow(.5)
+        losses = F.relu(distance_positive - distance_negative + self.margin)
+        return losses.mean() if size_average else losses.sum()
+
+class TripletLossTrainer(ClusterTrainer):
+
+    def __init__(self, initial_model, config, data_loader):
+
+        ClusterTrainer.__init__(self, initial_model, config, data_loader)
+        self.loss_func = TripletLoss(config.trainer.margin)
+
+    def trainIter(self, data_loader_iter, timers):
+        # print("HERE!")
+        data_meter, data_timer, total_timer = timers
+        self.optimizer.zero_grad()
+        batch_loss = {
+            'loss': 0.0,
+        }
+        data_time = 0
+        total_timer.tic()
+
+        data_timer.tic()
+        input_dict = data_loader_iter.next()
+        data_time += data_timer.toc(average=False)
+        modelInput = ME.SparseTensor(feats=input_dict['feats'].to(self.cur_device), coords=input_dict['coords'].to(self.cur_device))
+        self.model = self.model.double()
+        modelOut = self.model(modelInput)
+        modelOut = modelOut.F
+        # print(modelOut)
+        # print(modelOut.shape)
+
+        # Need to extract positive and negative sample pairs
+        posCorrespondences = input_dict['posMatches'].to(self.cur_device)
+        # Find all indices where value isn't -1
+        # posCorrespondences = torch.Tensor([2, -1, 0]).long()
+        # posCorrespondences = torch.Tensor([2, -1, -1]).long()
+        evalIndices = torch.nonzero(posCorrespondences != -1, as_tuple=False).squeeze(dim=1)
+        # print("Eval indices")
+        # print(evalIndices)
+        # Get entries corresponding to eval indices
+
+        numPairs = evalIndices.size(dim=0)
+        # print("Num pairs")
+        # print(numPairs)
+
+        negCorrespondences = input_dict['negMatches']
+        # negCorrespondences = [[1], [0, 1]]
+
+        loss = 0 # TODO Is this a fair way to initialize this?
+        # TODO is there a way to do this without a for loop?
+        for i in range(numPairs):
+            # print(modelOut)
+            # print("I: " + str(i))
+            featAIndex = evalIndices[i].squeeze()
+            # print("Feat A index " + str(featAIndex))
+            featA = modelOut[featAIndex]
+            # print(featA)
+            featBIndex = posCorrespondences[featAIndex]
+            # print("Feat B index " + str(featBIndex))
+            featB = modelOut[featBIndex]
+            # print(featB)
+
+            # negFeatIndices = negCorrespondences[i]
+            negFeatIndex = torch.tensor(negCorrespondences[featAIndex][0]).long().to(self.cur_device)
+            print("Neg index")
+            print(negFeatIndex)
+            negFeat = modelOut[negFeatIndex]
+            # TODO can we do this in batch?
+            loss += self.loss_func(featA, featB, negFeat)
 
         # TODO Compute loss
 

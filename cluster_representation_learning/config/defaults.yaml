@@ -4,9 +4,10 @@ defaults:
   - hydra/hydra_logging: colorlog
 
 trainer:
-  trainer: ContrastiveLossTrainer
   overwrite_checkpoint: False
   batch_size: 32
+  margin: 1
+  useNPairLoss: False
 
   # Metric learning loss
   neg_thresh: 1.4
