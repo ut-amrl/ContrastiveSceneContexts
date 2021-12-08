@@ -41,10 +41,12 @@ class ClusterClassificationLossTrainer(ClusterTrainer):
         ClusterTrainer.__init__(self, initial_model, config, data_loader)
 
         if (weights):
-            self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-100)
+            self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-100, weight=torch.DoubleTensor(weights).to(self.cur_device))
         else:
-            self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-100, weights=weights)
-
+            self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-100)
+        print("Weights")
+        print(self.criterion.weight)
+        self.softmax = torch.nn.Softmax()
 
     def trainIter(self, data_loader_iter, timers):
         data_meter, data_timer, total_timer = timers
@@ -62,7 +64,12 @@ class ClusterClassificationLossTrainer(ClusterTrainer):
         modelInput = ME.SparseTensor(feats=feats.to(self.cur_device), coords=coords.to(self.cur_device))
         self.model = self.model.double()
         modelOut = self.model(modelInput)
-        loss = self.criterion(modelOut.F.squeeze(), labels.to(self.cur_device).long())
+        modelOut = modelOut.F
+        #print(coords)
+        #print(modelOut)
+        #print(modelOut.shape)
+        #print(labels)
+        loss = self.criterion(modelOut.squeeze(), labels.to(self.cur_device).long())
         loss.backward()
 
         result = {"loss": loss}
