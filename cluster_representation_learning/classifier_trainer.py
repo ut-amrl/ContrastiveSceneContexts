@@ -10,7 +10,7 @@ import lib.unoriginal.multiprocessing_utils as mpu
 import numpy as np
 import MinkowskiEngine as ME
 
-from lib.classification_data_loader import createClassificationDataLoader
+from lib.classification_data_loader import createClassificationDataLoader, extractClassWeights
 from lib.classification_trainer import ClusterClassificationLossTrainer
 
 torch.manual_seed(0)
@@ -41,7 +41,12 @@ def single_proc_run(config):
 
 
 def testTrainer(model, config, datasetTopFile):
-  trainer = ClusterClassificationLossTrainer(model, config, createClassificationDataLoader(datasetTopFile, config.data.voxel_size, config.data.batch_size, config.misc.num_gpus))
+  classWeights = extractClassWeights(datasetTopFile, config.net.model_n_out)
+  trainer = ClusterClassificationLossTrainer(model, config,
+                                             createClassificationDataLoader(datasetTopFile, config.data.voxel_size,
+                                                                            config.data.batch_size,
+                                                                            config.misc.num_gpus),
+                                             classWeights)
   trainer.train()
 
 

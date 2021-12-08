@@ -36,11 +36,14 @@ def load_state(model, weights, lenient_weight_loading=False):
 class ClusterClassificationLossTrainer(ClusterTrainer):
 
 
-    def __init__(self, initial_model, config, data_loader):
+    def __init__(self, initial_model, config, data_loader, weights=None):
 
         ClusterTrainer.__init__(self, initial_model, config, data_loader)
 
-        self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-100)
+        if (weights):
+            self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-100)
+        else:
+            self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-100, weights=weights)
 
 
     def trainIter(self, data_loader_iter, timers):
