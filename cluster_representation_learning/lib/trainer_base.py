@@ -1,10 +1,12 @@
-
+import joblib
 import logging
 import os
 
 import torch
 import torch.optim as optim
 from torch.serialization import default_restore_location
+
+import copy
 
 import MinkowskiEngine as ME
 
@@ -14,6 +16,8 @@ from omegaconf import OmegaConf
 from model.cluster_label_model import ClusterLabelModel
 import lib.unoriginal.distributed as du
 from lib.unoriginal.timer import Timer, AverageMeter
+
+from test_data_loader import createDataLoader
 
 def load_state(model, weights, lenient_weight_loading=False):
   if du.get_world_size() > 1:
@@ -32,12 +36,15 @@ def load_state(model, weights, lenient_weight_loading=False):
 
   _model.load_state_dict(weights, strict=True)
 
+
+
 class ClusterTrainer:
     def __init__(self, initial_model, config, data_loader):
         assert config.misc.use_gpu and torch.cuda.is_available(), "DDP mode must support GPU"
         self.stat_freq = config.trainer.stat_freq
         self.lr_update_freq = config.trainer.lr_update_freq
         self.checkpoint_freq = config.trainer.checkpoint_freq
+        self.config = config
 
         self.is_master = du.is_master_proc(config.misc.num_gpus) if config.misc.num_gpus > 1 else True
 
@@ -68,6 +75,10 @@ class ClusterTrainer:
         self.curr_iter = 0
         self.batch_size = data_loader.batch_size
         self.data_loader = data_loader
+
+        if (config.data.eval_dataset_file != ''):
+            datafiles = self.loadEvalFilesFromFile(config.data.eval_dataset_file)
+            self.eval_data_loader = createDataLoader(datafiles, config.data.voxel_size, config.data.batch_size)
 
         # ---------------- optional: resume checkpoint by given path ----------------------
         if config.net.finetuned_weights and os.path.isfile(config.net.finetuned_weights):
@@ -118,6 +129,52 @@ class ClusterTrainer:
         # Create symlink
         os.system('ln -s {}.pth weights/weights.pth'.format(filename))
 
+    def loadEvalFilesFromFile(self, highLevelFileName):
+        with open(highLevelFileName, newline='') as highLevelFile:
+            subfiles = highLevelFile.readlines()
+            return [subfile.strip() for subfile in subfiles]
+
+    def outputEvalResults(self, curr_iter):
+        if not self.is_master:
+            return
+
+        if self.config.data.eval_dataset_file == '':
+            return
+
+        outFileName = self.config.data.eval_dataset_file + "_result_" + str(curr_iter) + ".pkl"
+        modelCopy = copy.deepcopy(self.model)
+        modelCopy.eval()
+
+        output = []
+
+        lastOutput = 0
+        # with torch.no_grad():
+        for batch in self.eval_data_loader:
+            coords = batch[0]
+            feats = batch[1]
+            tensor = ME.SparseTensor(coords=coords, feats=feats)
+
+            outForBatch = modelCopy(tensor)
+            outFeats = outForBatch.F
+            for i in range(outForBatch.shape[0]):
+                output.append(outFeats[i, :].numpy())
+            numProcessed = len(output)
+            if (numProcessed > lastOutput + 1000):
+                print("Processed " + str(numProcessed))
+                lastOutput = numProcessed
+
+        datafiles = self.loadEvalFilesFromFile(self.config.data.eval_dataset_file)
+
+        if (len(output) != len(datafiles)):
+            print("Not as many labels generated as test files. ")
+            return
+        combinedResults = [(datafiles[i], output[i]) for i in range(len(datafiles))]
+        with open(outFileName, 'wb') as resultsFile:
+            joblib.dump(combinedResults, resultsFile)
+
+        self.eval_data_loader = createDataLoader(datafiles, self.config.data.voxel_size, self.config.data.batch_size)
+
+
     def train(self):
 
         curr_iter = self.curr_iter
@@ -157,6 +214,7 @@ class ClusterTrainer:
                 if not self.config.trainer.overwrite_checkpoint:
                     checkpoint_name += '_{}'.format(curr_iter)
                 self._save_checkpoint(curr_iter, checkpoint_name)
+                self.outputEvalResults(curr_iter)
 
     def trainIter(self, data_loader_iter, timers):
         pass

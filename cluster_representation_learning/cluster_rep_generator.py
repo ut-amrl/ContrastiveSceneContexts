@@ -12,6 +12,7 @@ import numpy as np
 import MinkowskiEngine as ME
 
 from lib.test_data_loader import createDataLoader, TestDataset
+from lib.trainer_base import load_state, default_restore_location
 from lib.contrastive_trainer import NPairLossClusterTrainer
 
 torch.manual_seed(0)
@@ -75,7 +76,9 @@ def single_proc_run(config):
   model = ClusterLabelModel(num_feats, config.net.model_n_out, config, D=3)
   model = model.double()
   # TODO  need to verify that this can fully load model
-  model.updateWithPretrainedWeights(config.net.pretrained_weights)
+  # model.updateWithPretrainedWeights(config.net.pretrained_weights)
+  state = torch.load(config.net.pretrained_weights, map_location=lambda s, l: default_restore_location(s, 'cpu'))
+  load_state(model, state['state_dict'])
 
   testFiles = loadEvalFilesFromFile(config.data.eval_dataset_file)
   labels = test(testFiles, model, config)

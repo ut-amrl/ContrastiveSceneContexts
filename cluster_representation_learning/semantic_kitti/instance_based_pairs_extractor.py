@@ -14,10 +14,6 @@ def checkClusterDimension(posSampleAPoints, posSampleBPoints, candidateNegSample
     posSampleBCoords = open3d.utility.Vector3dVector(posSampleBPoints[:, 0:3])
     negSampleCoords = open3d.utility.Vector3dVector(candidateNegSamplePoints[:, 0:3])
 
-    print(posSampleAPoints.shape[0])
-    print(posSampleBPoints.shape[0])
-    print(candidateNegSamplePoints.shape[0])
-
     bbA = open3d.geometry.OrientedBoundingBox.create_from_points(posSampleACoords)
     bbB = open3d.geometry.OrientedBoundingBox.create_from_points(posSampleBCoords)
     negSampleBB = open3d.geometry.OrientedBoundingBox.create_from_points(negSampleCoords)
