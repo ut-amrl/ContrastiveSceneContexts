@@ -306,9 +306,12 @@ class TripletLoss(nn.Module):
         self.margin = margin
 
     def forward(self, anchor, positive, negative, size_average=True):
-        distance_positive = torch.cdist(anchor, positive)  # .pow(.5)
-        distance_negative = torch.cdist(anchor, negative) # .pow(.5)
+        distance_positive = F.pairwise_distance(anchor, positive)
+        #print("Distance positive " + str(distance_positive))
+        distance_negative = F.pairwise_distance(anchor, negative)
+        #print("Distance negative: " + str(distance_negative))
         losses = F.relu(distance_positive - distance_negative + self.margin)
+        #print(losses)
         return losses.mean() if size_average else losses.sum()
 
 class TripletLossTrainer(ClusterTrainer):
@@ -344,6 +347,12 @@ class TripletLossTrainer(ClusterTrainer):
         # posCorrespondences = torch.Tensor([2, -1, 0]).long()
         # posCorrespondences = torch.Tensor([2, -1, -1]).long()
         evalIndices = torch.nonzero(posCorrespondences != -1, as_tuple=False).squeeze(dim=1)
+        posSamplesA = torch.index_select(modelOut, 0, evalIndices)
+        posSamplesBIndices = torch.index_select(posCorrespondences, 0, evalIndices)
+        posSamplesB = torch.index_select(modelOut, 0, posSamplesBIndices)
+
+    
+
         # print("Eval indices")
         # print(evalIndices)
         # Get entries corresponding to eval indices
@@ -353,29 +362,39 @@ class TripletLossTrainer(ClusterTrainer):
         # print(numPairs)
 
         negCorrespondences = input_dict['negMatches']
+        negCorrespondenceIndices = []
+        for i in range(numPairs):
+            featAIndex = evalIndices[i].squeeze()
+            negCorrespondenceIndices.append(negCorrespondences[featAIndex][0])
+        negCorrespondenceIndicesTensor = torch.tensor(negCorrespondenceIndices).long().to(self.cur_device)
+        negFeats = torch.index_select(modelOut, 0, negCorrespondenceIndicesTensor)
+
+        loss = self.loss_func(posSamplesA, posSamplesB, negFeats)
+        #print("Loss ")
+        #print(loss)
         # negCorrespondences = [[1], [0, 1]]
 
-        loss = 0 # TODO Is this a fair way to initialize this?
+        #loss = 0 # TODO Is this a fair way to initialize this?
         # TODO is there a way to do this without a for loop?
-        for i in range(numPairs):
+        #for i in range(numPairs):
             # print(modelOut)
             # print("I: " + str(i))
-            featAIndex = evalIndices[i].squeeze()
+        #    featAIndex = evalIndices[i].squeeze()
             # print("Feat A index " + str(featAIndex))
-            featA = modelOut[featAIndex]
+        #    featA = modelOut[featAIndex]
             # print(featA)
-            featBIndex = posCorrespondences[featAIndex]
+        #    featBIndex = posCorrespondences[featAIndex]
             # print("Feat B index " + str(featBIndex))
-            featB = modelOut[featBIndex]
+        #    featB = modelOut[featBIndex]
             # print(featB)
 
             # negFeatIndices = negCorrespondences[i]
-            negFeatIndex = torch.tensor(negCorrespondences[featAIndex][0]).long().to(self.cur_device)
-            print("Neg index")
-            print(negFeatIndex)
-            negFeat = modelOut[negFeatIndex]
+        #    negFeatIndex = torch.tensor(negCorrespondences[featAIndex][0]).long().to(self.cur_device)
+        #    print("Neg index")
+        #    print(negFeatIndex)
+        #    negFeat = modelOut[negFeatIndex]
             # TODO can we do this in batch?
-            loss += self.loss_func(featA, featB, negFeat)
+        #    loss += self.loss_func(featA, featB, negFeat)
 
         # TODO Compute loss
 
