@@ -22,20 +22,12 @@ def checkClusterDimension(posSampleAPoints, posSampleBPoints, candidateNegSample
     bbB = open3d.geometry.OrientedBoundingBox.create_from_points(posSampleBCoords)
     negSampleBB = open3d.geometry.OrientedBoundingBox.create_from_points(negSampleCoords)
 
-    print(bbA.extent)
-    print(bbB.extent)
-    print(negSampleBB.extent)
-
-
     ratioNegWithA = bbA.extent[0] / negSampleBB.extent[0]
     if (ratioNegWithA < 1):
         ratioNegWithA = 1 / ratioNegWithA
     ratioNegWithB = bbB.extent[0] / negSampleBB.extent[0]
     if (ratioNegWithB < 1):
         ratioNegWithB = 1 / ratioNegWithB
-
-    print(ratioNegWithA)
-    print(ratioNegWithB)
 
     if (ratioNegWithA > minSizeRatio) and (ratioNegWithB > minSizeRatio):
         return True
@@ -50,8 +42,6 @@ def generatePairs(numPairsToGenerate, numNegativeEntriesPerPair, datasetDir, min
     for trainingFile in trainingFiles:
         instanceId = extractInstanceFromFileName(trainingFile)
         filesForInstance = []
-        print(trainingFile)
-        print(instanceId)
         if (instanceId in filesByInstance):
             filesForInstance = filesByInstance[instanceId]
         filesForInstance.append(trainingFile)
