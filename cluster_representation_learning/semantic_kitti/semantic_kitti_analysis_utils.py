@@ -1,6 +1,7 @@
 import os
 import glob
 import numpy as np
+import csv
 
 def getSemanticClassGroups():
     semanticClassList = [
@@ -79,6 +80,17 @@ def extractSemanticClassFromFileName(fileName):
     basename = os.path.basename(fileName)
     semClassComponent = basename.split('_')[-2]
     return int(semClassComponent.replace('semClass', ''))
+
+def extractInstanceFromFileName(fileName):
+    basename = os.path.basename(fileName)
+    instanceComponent = basename.split('_')[-3]
+    return int(instanceComponent.replace('inst', ''))
+
+def writeSampleGroups(sampleGroups, outFile):
+    with open(outFile, 'w', newline='') as csvfile:
+        datawriter = csv.writer(csvfile)
+        for sampleGroup in sampleGroups:
+            datawriter.writerow(sampleGroup)
 
 def getFilesOverMinPoints(filesList, minPoints):
     if (minPoints == 0):

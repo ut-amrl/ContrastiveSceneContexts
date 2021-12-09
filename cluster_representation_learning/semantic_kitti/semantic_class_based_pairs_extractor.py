@@ -2,7 +2,8 @@ import csv
 import random
 import argparse
 
-from semantic_kitti_analysis_utils import getSemanticClassGroups, extractSemanticClassFromFileName, getAllPointCloudFilesForSequences, getCondensedSemanticClassGroups
+from semantic_kitti_analysis_utils import getSemanticClassGroups, extractSemanticClassFromFileName, \
+    getAllPointCloudFilesForSequences, getCondensedSemanticClassGroups, writeSampleGroups
 
 def getTrainingSequences():
     return ["00", "01", "02", "03", "04", "05"]
@@ -53,13 +54,6 @@ def generatePairs(numPairsToGenerate, numNegativeEntriesPerPair, datasetDir, min
         sampleGroups.append(sampleIFiles)
 
     return sampleGroups
-
-def writeSampleGroups(sampleGroups, outFile):
-    with open(outFile, 'w', newline='') as csvfile:
-        datawriter = csv.writer(csvfile)
-        for sampleGroup in sampleGroups:
-            datawriter.writerow(sampleGroup)
-
 
 def argParser():
     parser = argparse.ArgumentParser("./semantic_class_based_pairs_extractor.py")
