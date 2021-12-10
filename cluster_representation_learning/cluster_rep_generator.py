@@ -79,6 +79,7 @@ def single_proc_run(config):
   # model.updateWithPretrainedWeights(config.net.pretrained_weights)
   state = torch.load(config.net.pretrained_weights, map_location=lambda s, l: default_restore_location(s, 'cpu'))
   load_state(model, state['state_dict'])
+  print("Loaded state from " + config.net.pretrained_weights)
 
   testFiles = loadEvalFilesFromFile(config.data.eval_dataset_file)
   labels = test(testFiles, model, config)

@@ -17,7 +17,7 @@ from model.cluster_label_model import ClusterLabelModel
 import lib.unoriginal.distributed as du
 from lib.unoriginal.timer import Timer, AverageMeter
 
-from test_data_loader import createDataLoader
+from lib.test_data_loader import createDataLoader
 
 def load_state(model, weights, lenient_weight_loading=False):
   if du.get_world_size() > 1:
@@ -142,26 +142,25 @@ class ClusterTrainer:
             return
 
         outFileName = self.config.data.eval_dataset_file + "_result_" + str(curr_iter) + ".pkl"
-        modelCopy = copy.deepcopy(self.model)
-        modelCopy.eval()
+        self.model.eval()
 
         output = []
 
         lastOutput = 0
-        # with torch.no_grad():
-        for batch in self.eval_data_loader:
-            coords = batch[0]
-            feats = batch[1]
-            tensor = ME.SparseTensor(coords=coords, feats=feats)
+        with torch.no_grad():
+            for batch in self.eval_data_loader:
+                coords = batch[0].double()
+                feats = batch[1]
+                tensor = ME.SparseTensor(coords=coords.to(self.cur_device), feats=feats.to(self.cur_device))
 
-            outForBatch = modelCopy(tensor)
-            outFeats = outForBatch.F
-            for i in range(outForBatch.shape[0]):
-                output.append(outFeats[i, :].numpy())
-            numProcessed = len(output)
-            if (numProcessed > lastOutput + 1000):
-                print("Processed " + str(numProcessed))
-                lastOutput = numProcessed
+                outForBatch = self.model(tensor)
+                outFeats = outForBatch.F
+                for i in range(outForBatch.shape[0]):
+                    output.append(outFeats[i, :].cpu().detach().numpy())
+                numProcessed = len(output)
+                if (numProcessed > lastOutput + 500):
+                    print("Processed " + str(numProcessed))
+                    lastOutput = numProcessed
 
         datafiles = self.loadEvalFilesFromFile(self.config.data.eval_dataset_file)
 
@@ -169,10 +168,12 @@ class ClusterTrainer:
             print("Not as many labels generated as test files. ")
             return
         combinedResults = [(datafiles[i], output[i]) for i in range(len(datafiles))]
+        print("Results file: " + outFileName)
         with open(outFileName, 'wb') as resultsFile:
             joblib.dump(combinedResults, resultsFile)
 
         self.eval_data_loader = createDataLoader(datafiles, self.config.data.voxel_size, self.config.data.batch_size)
+        self.model.train()
 
 
     def train(self):

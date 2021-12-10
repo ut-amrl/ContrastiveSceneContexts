@@ -20,6 +20,7 @@ class TrainDataset(Dataset):
         self.pointCloudFeats = []
         self.sampleGroups = []
         self.fileNames = {}
+        self.fileNameList = []
 
         with open(matchesFileName, newline='') as matchesFile:
             matchesReader = csv.reader(matchesFile)
@@ -38,6 +39,7 @@ class TrainDataset(Dataset):
                         coords, feats = loadPointCloudFromFile(pointCloudFileName, self.voxelSize)
                         self.pointCloudCoords.append(coords)
                         self.pointCloudFeats.append(feats)
+                        self.fileNameList.append(pointCloudFileName)
 
                 sampleGroupUsingIndices = [self.fileNames[pointCloudFileName] for pointCloudFileName in trimmedRow]
                 self.sampleGroups.append(sampleGroupUsingIndices)
@@ -57,7 +59,8 @@ class TrainDataset(Dataset):
         for i in range(2, len(sampleGroup)):
             negSamples.append([self.pointCloudCoords[i], self.pointCloudFeats[i]])
 
-        return (posCloudCoordsA, posCloudFeatsA, posCloudCoordsB, posCloudFeatsB, negSamples)
+        #print("Relevant files " + str([self.fileNameList[i] for i in sampleGroup]))
+        return (posCloudCoordsA, posCloudFeatsA, posCloudCoordsB, posCloudFeatsB, negSamples, [self.fileNameList[i] for i in sampleGroup])
 
     def __len__(self):
         # TODO need to manage transformations and comparing multiple
@@ -72,7 +75,7 @@ def collateTrainingData(training_data_entries):
     # posCloudFeatsAs - List with each entry having the features for part A of the positive pair
     # posCloudFeatsBs - List with each entry having the features for part B of the positive pair
     # negSamples - List with each entry as a tuple of (coord, feature) for the negative entries
-    posCloudCoordsAs, posCloudFeatsAs, posCloudCoordsBs, posCloudFeatsBs, negSamplesList = list(zip(*training_data_entries))
+    posCloudCoordsAs, posCloudFeatsAs, posCloudCoordsBs, posCloudFeatsBs, negSamplesList, fileNamesList = list(zip(*training_data_entries))
 
     # print("Batch size!")
     # print(len(posCloudCoordsAs))
@@ -82,10 +85,12 @@ def collateTrainingData(training_data_entries):
     coords = []
     posCoordsList = []
     negSamplesBatchIdsList = []
+    fileNamesBatchList = []
 
     nextBatchNum = 0
 
     for batchId, posCloudCoordA in enumerate(posCloudCoordsAs):
+        fileNamesBatchList.extend(fileNamesList[batchId])
         N0 = posCloudCoordsAs[batchId].shape[0]
         N1 = posCloudCoordsBs[batchId].shape[0]
         # print("N0 for batch " + str(batchId) + ": " + str(N0))
@@ -151,7 +156,8 @@ def collateTrainingData(training_data_entries):
         'feats':feats,
         'coords':coords,
         'posMatches':posCoordsList,
-        'negMatches':negSamplesBatchIdsList
+        'negMatches':negSamplesBatchIdsList,
+        'fileNames':fileNamesBatchList
     }
 
 def createTrainingDataLoader(matchesFileName, voxelSize, batchSize, numGpus):

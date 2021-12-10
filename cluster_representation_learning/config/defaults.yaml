@@ -6,7 +6,7 @@ defaults:
 trainer:
   overwrite_checkpoint: False
   batch_size: 32
-  margin: 1
+  margin: 1.25
   useNPairLoss: False
 
   # Metric learning loss
@@ -66,7 +66,7 @@ misc:
   #test_file3: /home/amanda/datasets/kitti_odometry/cluster_rep_learning_data/01/sem_kitti_cluster_01_scan428_inst14483708_semClass252_points.npy
   use_gpu: True
   num_gpus: 1
-  port: 10001
+  port: 10006
   lenient_weight_loading: False # Weights with the same size will be loaded
 
   train_num_thread: 2
@@ -89,10 +89,12 @@ misc:
 
 # Dataset specific configurations
 data:
-  eval_dataset_file: /robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/contrastiveLearningGroups/evalFilesList.csv
+  #eval_dataset_file: /robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/contrastiveLearningGroups/evalFilesList.csv
+  eval_dataset_file: /robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/contrastiveLearningGroups/evalTrainingFiles.csv
   results_out:
   #dataset_file: /robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/contrastiveLearningGroups/testExample10000groups.csv
-  dataset_file: /robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/contrastiveLearningGroups/testExample9999groups_min75points.csv
+  #dataset_file: /robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/contrastiveLearningGroups/testExample15000groups_min300points.csv
+  dataset_file: /robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/contrastiveLearningGroups/triplet100000groups_min300points_condensed_classes.csv
   voxel_size: 0.025
   voxelize: False
   num_points: 40000
