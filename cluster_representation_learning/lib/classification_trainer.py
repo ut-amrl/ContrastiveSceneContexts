@@ -83,6 +83,6 @@ class ClusterClassificationLossTrainer(ClusterTrainer):
         torch.cuda.empty_cache()
         total_timer.toc()
         data_meter.update(data_time)
-        return batch_loss
+        return batch_loss, False
 
 

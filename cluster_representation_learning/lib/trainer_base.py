@@ -19,6 +19,8 @@ from lib.unoriginal.timer import Timer, AverageMeter
 
 from lib.test_data_loader import createDataLoader
 
+from lib.data_loading_utils import loadPointCloudFromFile
+
 def load_state(model, weights, lenient_weight_loading=False):
   if du.get_world_size() > 1:
       _model = model.module
@@ -135,44 +137,58 @@ class ClusterTrainer:
             return [subfile.strip() for subfile in subfiles]
 
     def outputEvalResults(self, curr_iter):
-        if not self.is_master:
-            return
+        # if not self.is_master:
+        #     return
+        #
+        # if self.config.data.eval_dataset_file == '':
+        #     return
 
-        if self.config.data.eval_dataset_file == '':
-            return
+        fileOfInterestPosA = "/robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/05/sem_kitti_cluster_05_scan1744_inst9043978_semClass10_points.npy"
+        fileOfInterestPosB = "/robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/00/sem_kitti_cluster_00_scan3067_inst4718602_semClass10_points.npy"
+        fileOfInterestNeg = "/robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/00/sem_kitti_cluster_00_scan144_inst393246_semClass30_points.npy"
 
-        outFileName = self.config.data.eval_dataset_file + "_result_" + str(curr_iter) + ".pkl"
+        files = [fileOfInterestPosA, fileOfInterestPosB, fileOfInterestNeg]
+
+        # outFileName = self.config.data.eval_dataset_file + "_result_" + str(curr_iter) + ".pkl"
         self.model.eval()
 
-        output = []
+        # output = []
 
-        lastOutput = 0
+        # lastOutput = 0
         with torch.no_grad():
-            for batch in self.eval_data_loader:
-                coords = batch[0].double()
-                feats = batch[1]
+            for pointCloudFile in files:
+            # for batch in self.eval_data_loader:
+            #     coords = batch[0].double()
+            #     feats = batch[1]
+                coords, feats = loadPointCloudFromFile(pointCloudFile, self.voxelSize)
+                coords = coords.double()
                 tensor = ME.SparseTensor(coords=coords.to(self.cur_device), feats=feats.to(self.cur_device))
 
+
                 outForBatch = self.model(tensor)
+
                 outFeats = outForBatch.F
-                for i in range(outForBatch.shape[0]):
-                    output.append(outFeats[i, :].cpu().detach().numpy())
-                numProcessed = len(output)
-                if (numProcessed > lastOutput + 500):
-                    print("Processed " + str(numProcessed))
-                    lastOutput = numProcessed
 
-        datafiles = self.loadEvalFilesFromFile(self.config.data.eval_dataset_file)
+                logging.info("File " + pointCloudFile)
+                logging.info(outFeats)
+                # for i in range(outForBatch.shape[0]):
+                #     output.append(outFeats[i, :].cpu().detach().numpy())
+                # numProcessed = len(output)
+                # if (numProcessed > lastOutput + 500):
+                #     print("Processed " + str(numProcessed))
+                #     lastOutput = numProcessed
 
-        if (len(output) != len(datafiles)):
-            print("Not as many labels generated as test files. ")
-            return
-        combinedResults = [(datafiles[i], output[i]) for i in range(len(datafiles))]
-        print("Results file: " + outFileName)
-        with open(outFileName, 'wb') as resultsFile:
-            joblib.dump(combinedResults, resultsFile)
+        # datafiles = self.loadEvalFilesFromFile(self.config.data.eval_dataset_file)
 
-        self.eval_data_loader = createDataLoader(datafiles, self.config.data.voxel_size, self.config.data.batch_size)
+        # if (len(output) != len(datafiles)):
+        #     print("Not as many labels generated as test files. ")
+        #     return
+        # combinedResults = [(datafiles[i], output[i]) for i in range(len(datafiles))]
+        # print("Results file: " + outFileName)
+        # with open(outFileName, 'wb') as resultsFile:
+        #     joblib.dump(combinedResults, resultsFile)
+
+        # self.eval_data_loader = createDataLoader(datafiles, self.config.data.voxel_size, self.config.data.batch_size)
         self.model.train()
 
 
@@ -187,7 +203,7 @@ class ClusterTrainer:
             curr_iter += 1
             epoch = curr_iter / len(self.data_loader)
 
-            batch_loss = self.trainIter(data_loader_iter, [data_meter, data_timer, total_timer])
+            batch_loss, evalKeyFiles = self.trainIter(data_loader_iter, [data_meter, data_timer, total_timer])
 
             # update learning rate
             if curr_iter % self.lr_update_freq == 0 or curr_iter == 1:
@@ -215,6 +231,7 @@ class ClusterTrainer:
                 if not self.config.trainer.overwrite_checkpoint:
                     checkpoint_name += '_{}'.format(curr_iter)
                 self._save_checkpoint(curr_iter, checkpoint_name)
+            if (evalKeyFiles):
                 self.outputEvalResults(curr_iter)
 
     def trainIter(self, data_loader_iter, timers):

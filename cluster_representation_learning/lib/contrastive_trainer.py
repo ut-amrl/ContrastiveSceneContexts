@@ -144,7 +144,7 @@ class NPairLossClusterTrainer(ClusterTrainer):
         torch.cuda.empty_cache()
         total_timer.toc()
         data_meter.update(data_time)
-        return batch_loss
+        return batch_loss, False
 
 # TODO consider implementing InfoNCELoss
 
@@ -205,7 +205,29 @@ class TripletLossTrainer(ClusterTrainer):
         posSamplesBIndices = torch.index_select(posCorrespondences, 0, evalIndices)
         posSamplesB = torch.index_select(modelOut, 0, posSamplesBIndices)
 
-    
+        fileOfInterestPosA = "/robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/05/sem_kitti_cluster_05_scan1744_inst9043978_semClass10_points.npy"
+        fileOfInterestPosB = "/robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/00/sem_kitti_cluster_00_scan3067_inst4718602_semClass10_points.npy"
+        fileOfInterestNeg = "/robodata/aaadkins/derived_data/cluster_rep_data/semantic_kitti/00/sem_kitti_cluster_00_scan144_inst393246_semClass30_points.npy"
+
+        fileNames = input_dict['fileNames']
+
+        printFeats = False
+        if ((fileOfInterestPosA in fileNames) and (fileOfInterestPosB in fileNames) and (fileOfInterestNeg in fileNames)):
+            printFeats = True
+
+        if (printFeats):
+            indexPosA = fileNames.index(fileOfInterestPosA)
+            indexPosB = fileNames.index(fileOfInterestPosB)
+            indexNeg = fileNames.index(fileOfInterestNeg)
+            featPosA = modelOut[indexPosA, :]
+            featPosB = modelOut[indexPosB, :]
+            featNeg = modelOut[indexNeg, :]
+            logging.info("Feat Pos A for file " + fileOfInterestPosA)
+            logging.info(featPosA)
+            logging.info("Feat Pos B for file " + fileOfInterestPosB)
+            logging.info(featPosB)
+            logging.info("Feat Neg for file " + fileOfInterestNeg)
+            logging.info(featNeg)
 
         # print("Eval indices")
         # print(evalIndices)
@@ -267,7 +289,7 @@ class TripletLossTrainer(ClusterTrainer):
         torch.cuda.empty_cache()
         total_timer.toc()
         data_meter.update(data_time)
-        return batch_loss
+        return batch_loss, printFeats
 
 # TODO consider implementing InfoNCELoss
 
