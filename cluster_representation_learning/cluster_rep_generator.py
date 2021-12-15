@@ -40,7 +40,7 @@ def loadEvalFilesFromFile(highLevelFileName):
 
 def test(testFiles, model, config):
   dataLoader =  createDataLoader(testFiles, config.data.voxel_size, config.data.batch_size)
-  model.eval()
+  #model.eval()
   output = []
 
   lastOutput = 0
